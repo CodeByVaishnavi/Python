@@ -719,25 +719,44 @@ print(portal.view_resumes())
 
 
 #35. Employee Database Management
-import sqlite3
-
+import pyodbc 
 class EmployeeDB:
     def __init__(self):
-        self.conn = sqlite3.connect("employee.db")
+        self.conn = pyodbc.connect(
+            "DRIVER={ODBC Driver 17 for SQL Server};"
+            "SERVER=VAISHNAVI;"
+            "DATABASE=EmployeeDB;"
+            "Trusted_Connection=yes;"
+        )
         self.cursor = self.conn.cursor()
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS employees 
-                               (name TEXT, mobile TEXT, address TEXT)''')
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS leave_requests 
-                               (name TEXT, leave_days INTEGER, status TEXT)''')
+
+        self.cursor.execute(
+            "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='employees' AND xtype='U') "
+            "CREATE TABLE employees ("
+            "id INT IDENTITY(1,1) PRIMARY KEY, "
+            "name NVARCHAR(100), "
+            "mobile NVARCHAR(15), "
+            "address NVARCHAR(255))"
+        )
+
+        self.cursor.execute(
+            "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='leave_requests' AND xtype='U') "
+            "CREATE TABLE leave_requests ("
+            "id INT IDENTITY(1,1) PRIMARY KEY, "
+            "name NVARCHAR(100), "
+            "leave_days INT, "
+            "status NVARCHAR(20))"
+        )
+
         self.conn.commit()
 
     def add_employee(self, name, mobile, address):
-        self.cursor.execute("INSERT INTO employees VALUES (?, ?, ?)", (name, mobile, address))
+        self.cursor.execute("INSERT INTO employees (name, mobile, address) VALUES (?, ?, ?)", (name, mobile, address))
         self.conn.commit()
         return "Employee added successfully!"
 
     def apply_leave(self, name, days):
-        self.cursor.execute("INSERT INTO leave_requests VALUES (?, ?, 'Pending')", (name, days))
+        self.cursor.execute("INSERT INTO leave_requests (name, leave_days, status) VALUES (?, ?, 'Pending')", (name, days))
         self.conn.commit()
         return "Leave applied!"
 
